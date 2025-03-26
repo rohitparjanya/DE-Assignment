@@ -1,0 +1,5 @@
+.cache
+__pycache__ 
+processed_data.zip
+.venv
+agents/__pycache__

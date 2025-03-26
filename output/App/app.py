@@ -2,113 +2,97 @@ Here's a Streamlit UI code that can be easily integrated with the given code:
 
 ```python
 import streamlit as st
-import secrets
+from todo_list import ToDoList, ToDoItem, InvalidIndexError, InvalidInputError
 
-# Define a constant for max_attempts
-MAX_ATTEMPTS = 3
+# Initialize the to-do list
+todo_list = ToDoList()
 
-def get_input(prompt: str, input_type: type, max_attempts: int = MAX_ATTEMPTS) -> input_type:
-    """
-    Gets user input and attempts to convert it to the specified type.
+# Streamlit UI
+st.title("To-Do List App")
 
-    Args:
-        prompt (str): The prompt to display to the user.
-        input_type (type): The type to which the input should be converted.
-        max_attempts (int): The maximum number of attempts to get a valid input.
+# Add item form
+with st.form("add_item"):
+    title = st.text_input("Enter item title")
+    description = st.text_input("Enter item description")
+    submit_button = st.form_submit_button("Add Item")
 
-    Returns:
-        input_type: The user's input as the specified type.
-
-    Raises:
-        ValueError: If the input cannot be converted to the specified type after max_attempts.
-    """
-    attempts = 0
-    while attempts < max_attempts:
+    if submit_button:
         try:
-            return input_type(st.text_input(prompt))
-        except ValueError:
-            st.error(f"Invalid input. Please enter a valid {input_type.__name__} value.")
-            attempts += 1
-    raise ValueError("Failed to get a valid input")
+            todo_list.add_item(title, description)
+            st.success("Item added successfully!")
+        except InvalidInputError as e:
+            st.error(f"Error: {e}")
 
-def get_random_number(min_value: int, max_value: int) -> int:
-    """
-    Generates a random integer between min_value and max_value (inclusive).
+# Remove item form
+with st.form("remove_item"):
+    index = st.number_input("Enter item index to remove", min_value=1)
+    submit_button = st.form_submit_button("Remove Item")
 
-    Args:
-        min_value (int): The minimum value for the random number.
-        max_value (int): The maximum value for the random number.
-
-    Returns:
-        int: A random integer between min_value and max_value.
-    """
-    return secrets.randbelow(max_value - min_value + 1) + min_value
-
-def get_random_float(min_value: float, max_value: float) -> float:
-    """
-    Generates a random floating-point number between min_value and max_value.
-
-    Args:
-        min_value (float): The minimum value for the random number.
-        max_value (float): The maximum value for the random number.
-
-    Returns:
-        float: A random floating-point number between min_value and max_value.
-
-    Raises:
-        ValueError: If min_value is greater than max_value.
-    """
-    if min_value > max_value:
-        raise ValueError("Minimum value cannot be greater than maximum value")
-    return secrets.uniform(min_value, max_value)
-
-def main() -> None:
-    """
-    The main function for the random number generator app.
-    """
-    st.title("Random Number Generator")
-    st.write("Select an option to generate a random number.")
-
-    option = st.selectbox("Select an option", ["Generate Random Integer", "Generate Random Float", "Quit"])
-
-    if option == "Generate Random Integer":
+    if submit_button:
         try:
-            min_value = int(st.text_input("Enter minimum value: "))
-            max_value = int(st.text_input("Enter maximum value: "))
-            if min_value > max_value:
-                st.error("Invalid range. Minimum value should be less than or equal to maximum value.")
-                return
-            random_number = get_random_number(min_value, max_value)
-            st.write(f"Random integer: {random_number}")
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
+            todo_list.remove_item(int(index) - 1)
+            st.success("Item removed successfully!")
+        except InvalidIndexError as e:
+            st.error(f"Error: {e}")
 
-    elif option == "Generate Random Float":
+# Update item form
+with st.form("update_item"):
+    index = st.number_input("Enter item index to update", min_value=1)
+    title = st.text_input("Enter new title (press enter to skip)")
+    description = st.text_input("Enter new description (press enter to skip)")
+    submit_button = st.form_submit_button("Update Item")
+
+    if submit_button:
         try:
-            min_value = float(st.text_input("Enter minimum value: "))
-            max_value = float(st.text_input("Enter maximum value: "))
-            if min_value > max_value:
-                st.error("Invalid range. Minimum value should be less than or equal to maximum value.")
-                return
-            random_number = get_random_float(min_value, max_value)
-            st.write(f"Random float: {random_number}")
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
+            if title == "":
+                title = None
+            if description == "":
+                description = None
+            todo_list.update_item(int(index) - 1, title, description)
+            st.success("Item updated successfully!")
+        except InvalidIndexError as e:
+            st.error(f"Error: {e}")
+        except InvalidInputError as e:
+            st.error(f"Error: {e}")
 
-    elif option == "Quit":
-        st.write("Goodbye!")
+# Mark item as completed form
+with st.form("mark_completed"):
+    index = st.number_input("Enter item index to mark as completed", min_value=1)
+    submit_button = st.form_submit_button("Mark as Completed")
 
-if __name__ == "__main__":
-    main()
+    if submit_button:
+        try:
+            todo_list.mark_item_as_completed(int(index) - 1)
+            st.success("Item marked as completed!")
+        except InvalidIndexError as e:
+            st.error(f"Error: {e}")
+
+# Mark item as incomplete form
+with st.form("mark_incomplete"):
+    index = st.number_input("Enter item index to mark as incomplete", min_value=1)
+    submit_button = st.form_submit_button("Mark as Incomplete")
+
+    if submit_button:
+        try:
+            todo_list.mark_item_as_incomplete(int(index) - 1)
+            st.success("Item marked as incomplete!")
+        except InvalidIndexError as e:
+            st.error(f"Error: {e}")
+
+# Display to-do list
+if st.button("Display To-Do List"):
+    st.write("To-Do List:")
+    for i, item in enumerate(todo_list.items):
+        st.write(f"{i+1}. {item}")
 ```
 
-**Explanation of Changes:**
+This Streamlit UI code provides the following features:
 
-1.  **Replaced `print` statements with Streamlit functions:** Used Streamlit functions like `st.title`, `st.write`, `st.selectbox`, `st.text_input`, and `st.error` to create a user-friendly interface.
-2.  **Integrated Streamlit with the existing code:** Modified the existing code to work seamlessly with Streamlit, ensuring that the app remains functional and user-friendly.
-3.  **Improved error handling:** Used `try-except` blocks to catch and display errors in a user-friendly manner, ensuring that the app remains stable and informative.
-4.  **Enhanced user experience:** Added interactive elements like select boxes and text inputs to make the app more engaging and easy to use.
+1.  **Add Item Form:** A form to add new items to the to-do list. It includes input fields for the title and description, and a submit button to add the item.
+2.  **Remove Item Form:** A form to remove items from the to-do list. It includes an input field for the item index and a submit button to remove the item.
+3.  **Update Item Form:** A form to update items in the to-do list. It includes input fields for the item index, new title, and new description, and a submit button to update the item.
+4.  **Mark Item as Completed Form:** A form to mark items as completed. It includes an input field for the item index and a submit button to mark the item as completed.
+5.  **Mark Item as Incomplete Form:** A form to mark items as incomplete. It includes an input field for the item index and a submit button to mark the item as incomplete.
+6.  **Display To-Do List Button:** A button to display the to-do list. When clicked, it displays the to-do list with the item index, title, and description.
 
-**Testing:**
-
-You can test the Streamlit app by running it and selecting different options from the select box. The app should handle invalid inputs and unexpected errors, and it should generate random numbers within the specified ranges.
+Note that you need to save the given code in a file named `todo_list.py` and import it in the Streamlit UI code. Also, make sure to install the required libraries, including Streamlit, by running `pip install streamlit`.

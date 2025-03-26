@@ -59,7 +59,7 @@ elif st.session_state.page == "next":
             st.session_state.processing_done = False
             st.session_state.step_results = {}  # Reset step results
             st.session_state.progress = 0  # Reset progress
-            
+            final_state=""
         else:
             st.error("Please enter Prompt")
 
@@ -72,6 +72,7 @@ elif st.session_state.page == "next":
         with tab:
             tab.empty()
 
+    final_state=""
     if not st.session_state.processing_done and st.session_state.text_data:
         progress_bar = progress_container.progress(0)
         status = status_box.status("Starting process...",state="running")
@@ -87,7 +88,6 @@ elif st.session_state.page == "next":
     if st.session_state.processing_done == True and final_state != "Invalid": 
         if os.path.exists("output"):  # Check if folder exists
                 shutil.make_archive("processed_data", 'zip', "output")
-                st.success("📁 Folder successfully zipped!")
                 with open("processed_data.zip", "rb") as zip_file:
                     st.download_button(
                         label="⬇️ Download Processed Folder",

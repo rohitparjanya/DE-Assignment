@@ -1,120 +1,148 @@
-Here's a comprehensive test case file for the given code using pytest:
+Here's a comprehensive test case file using pytest for the given code:
 
 ```python
-# tests/test_random_number_generator.py
-
+# tests/test_todo_list.py
 import pytest
-import unittest
-from unittest.mock import patch
-from your_module import get_input, get_random_number, get_random_float, display_menu, generate_random_integer, generate_random_float
+from todo_list import ToDoList, ToDoItem, InvalidIndexError, InvalidInputError
 
-class TestGetInput:
-    @patch('builtins.input', return_value='10')
-    def test_get_input_valid_input(self, input):
-        result = get_input("Enter a number: ", int)
-        assert result == 10
+def test_todo_item_init():
+    """Test initializing a ToDoItem."""
+    item = ToDoItem("Test Item", "Test Description")
+    assert item.title == "Test Item"
+    assert item.description == "Test Description"
+    assert not item.completed
 
-    @patch('builtins.input', side_effect=['a', 'b', '10'])
-    def test_get_input_invalid_input(self, input):
-        result = get_input("Enter a number: ", int)
-        assert result == 10
+def test_todo_item_mark_as_completed():
+    """Test marking a ToDoItem as completed."""
+    item = ToDoItem("Test Item", "Test Description")
+    item.mark_as_completed()
+    assert item.completed
 
-    @patch('builtins.input', side_effect=['a', 'b', 'c'])
-    def test_get_input_max_attempts_exceeded(self, input):
-        with pytest.raises(ValueError):
-            get_input("Enter a number: ", int)
+def test_todo_item_mark_as_incomplete():
+    """Test marking a ToDoItem as incomplete."""
+    item = ToDoItem("Test Item", "Test Description")
+    item.mark_as_completed()
+    item.mark_as_incomplete()
+    assert not item.completed
 
-class TestGetRandomNumber:
-    def test_get_random_number_valid_range(self):
-        min_value = 1
-        max_value = 10
-        random_number = get_random_number(min_value, max_value)
-        assert min_value <= random_number <= max_value
+def test_todo_list_init():
+    """Test initializing a ToDoList."""
+    todo_list = ToDoList()
+    assert len(todo_list.items) == 0
 
-    def test_get_random_number_invalid_range(self):
-        min_value = 10
-        max_value = 1
-        with pytest.raises(ValueError):
-            get_random_number(min_value, max_value)
+def test_todo_list_add_item():
+    """Test adding an item to a ToDoList."""
+    todo_list = ToDoList()
+    todo_list.add_item("Test Item", "Test Description")
+    assert len(todo_list.items) == 1
 
-class TestGetRandomFloat:
-    def test_get_random_float_valid_range(self):
-        min_value = 1.0
-        max_value = 10.0
-        random_number = get_random_float(min_value, max_value)
-        assert min_value <= random_number <= max_value
+def test_todo_list_remove_item():
+    """Test removing an item from a ToDoList."""
+    todo_list = ToDoList()
+    todo_list.add_item("Test Item", "Test Description")
+    todo_list.remove_item(0)
+    assert len(todo_list.items) == 0
 
-    def test_get_random_float_invalid_range(self):
-        min_value = 10.0
-        max_value = 1.0
-        with pytest.raises(ValueError):
-            get_random_float(min_value, max_value)
+def test_todo_list_update_item():
+    """Test updating an item in a ToDoList."""
+    todo_list = ToDoList()
+    todo_list.add_item("Test Item", "Test Description")
+    todo_list.update_item(0, "New Test Item", "New Test Description")
+    assert todo_list.items[0].title == "New Test Item"
+    assert todo_list.items[0].description == "New Test Description"
 
-class TestDisplayMenu:
-    @patch('builtins.print')
-    def test_display_menu(self, mock_print):
-        display_menu()
-        mock_print.assert_called_with("Random Number App")
-        mock_print.assert_called_with("----------------")
+def test_todo_list_mark_item_as_completed():
+    """Test marking an item as completed in a ToDoList."""
+    todo_list = ToDoList()
+    todo_list.add_item("Test Item", "Test Description")
+    todo_list.mark_item_as_completed(0)
+    assert todo_list.items[0].completed
 
-class TestGenerateRandomInteger:
-    @patch('your_module.get_input', side_effect=[1, 10])
-    @patch('your_module.get_random_number')
-    @patch('builtins.print')
-    def test_generate_random_integer_valid_range(self, mock_print, mock_get_random_number, mock_get_input):
-        generate_random_integer()
-        mock_get_input.assert_called_with("Enter minimum value: ", int)
-        mock_get_input.assert_called_with("Enter maximum value: ", int)
-        mock_get_random_number.assert_called_once()
-        mock_print.assert_called_with(f"Random integer: {mock_get_random_number.return_value}")
+def test_todo_list_mark_item_as_incomplete():
+    """Test marking an item as incomplete in a ToDoList."""
+    todo_list = ToDoList()
+    todo_list.add_item("Test Item", "Test Description")
+    todo_list.mark_item_as_completed(0)
+    todo_list.mark_item_as_incomplete(0)
+    assert not todo_list.items[0].completed
 
-    @patch('your_module.get_input', side_effect=[10, 1])
-    @patch('builtins.print')
-    def test_generate_random_integer_invalid_range(self, mock_print, mock_get_input):
-        generate_random_integer()
-        mock_get_input.assert_called_with("Enter minimum value: ", int)
-        mock_get_input.assert_called_with("Enter maximum value: ", int)
-        mock_print.assert_called_with("Invalid range. Minimum value should be less than or equal to maximum value.")
+def test_todo_list_invalid_index():
+    """Test handling an invalid index in a ToDoList."""
+    todo_list = ToDoList()
+    with pytest.raises(InvalidIndexError):
+        todo_list.remove_item(0)
 
-class TestGenerateRandomFloat:
-    @patch('your_module.get_input', side_effect=[1.0, 10.0])
-    @patch('your_module.get_random_float')
-    @patch('builtins.print')
-    def test_generate_random_float_valid_range(self, mock_print, mock_get_random_float, mock_get_input):
-        generate_random_float()
-        mock_get_input.assert_called_with("Enter minimum value: ", float)
-        mock_get_input.assert_called_with("Enter maximum value: ", float)
-        mock_get_random_float.assert_called_once()
-        mock_print.assert_called_with(f"Random float: {mock_get_random_float.return_value}")
+def test_todo_list_invalid_input():
+    """Test handling invalid input in a ToDoList."""
+    todo_list = ToDoList()
+    with pytest.raises(InvalidInputError):
+        todo_list.add_item("Test Item!", "Test Description")
 
-    @patch('your_module.get_input', side_effect=[10.0, 1.0])
-    @patch('builtins.print')
-    def test_generate_random_float_invalid_range(self, mock_print, mock_get_input):
-        generate_random_float()
-        mock_get_input.assert_called_with("Enter minimum value: ", float)
-        mock_get_input.assert_called_with("Enter maximum value: ", float)
-        mock_print.assert_called_with("Invalid range. Minimum value should be less than or equal to maximum value.")
+def test_todo_list_update_item_invalid_input():
+    """Test handling invalid input when updating an item in a ToDoList."""
+    todo_list = ToDoList()
+    todo_list.add_item("Test Item", "Test Description")
+    with pytest.raises(InvalidInputError):
+        todo_list.update_item(0, "New Test Item!", "New Test Description")
 
-def test_main():
-    # Test the main function
-    with patch('builtins.input', return_value='3'):
-        with patch('your_module.display_menu') as mock_display_menu:
-            with patch('your_module.generate_random_integer') as mock_generate_random_integer:
-                with patch('your_module.generate_random_float') as mock_generate_random_float:
-                    with patch('builtins.print') as mock_print:
-                        # Call the main function
-                        # main()
-                        # Assert that the display_menu function was called
-                        mock_display_menu.assert_called_once()
-                        # Assert that the generate_random_integer function was not called
-                        mock_generate_random_integer.assert_not_called()
-                        # Assert that the generate_random_float function was not called
-                        mock_generate_random_float.assert_not_called()
-                        # Assert that the print function was called with the correct message
-                        mock_print.assert_called_with("Goodbye!")
+def test_todo_list_update_item_invalid_index():
+    """Test handling an invalid index when updating an item in a ToDoList."""
+    todo_list = ToDoList()
+    with pytest.raises(InvalidIndexError):
+        todo_list.update_item(0, "New Test Item", "New Test Description")
 
+def test_todo_list_mark_item_as_completed_invalid_index():
+    """Test handling an invalid index when marking an item as completed in a ToDoList."""
+    todo_list = ToDoList()
+    with pytest.raises(InvalidIndexError):
+        todo_list.mark_item_as_completed(0)
+
+def test_todo_list_mark_item_as_incomplete_invalid_index():
+    """Test handling an invalid index when marking an item as incomplete in a ToDoList."""
+    todo_list = ToDoList()
+    with pytest.raises(InvalidIndexError):
+        todo_list.mark_item_as_incomplete(0)
+
+# Test fixtures
+@pytest.fixture
+def todo_list():
+    return ToDoList()
+
+@pytest.fixture
+def todo_item():
+    return ToDoItem("Test Item", "Test Description")
+
+# Test parameterization
+@pytest.mark.parametrize("title, description", [
+    ("Test Item", "Test Description"),
+    ("New Test Item", "New Test Description"),
+])
+def test_todo_item_init_parameterized(title, description):
+    """Test initializing a ToDoItem with different parameters."""
+    item = ToDoItem(title, description)
+    assert item.title == title
+    assert item.description == description
+    assert not item.completed
+
+# Test setup and teardown
+def test_todo_list_setup_teardown():
+    """Test setting up and tearing down a ToDoList."""
+    todo_list = ToDoList()
+    try:
+        todo_list.add_item("Test Item", "Test Description")
+        assert len(todo_list.items) == 1
+    finally:
+        todo_list.remove_item(0)
+        assert len(todo_list.items) == 0
 ```
 
-This test suite covers all the functions in the given code, including `get_input`, `get_random_number`, `get_random_float`, `display_menu`, `generate_random_integer`, and `generate_random_float`. It also tests the `main` function to ensure that it calls the `display_menu` function and handles the user's input correctly.
+This test case file covers various scenarios, including:
 
-Note that you'll need to replace `your_module` with the actual name of the module containing the code you're testing.
+1.  Initializing a `ToDoItem` and a `ToDoList`.
+2.  Adding, removing, updating, and marking items as completed or incomplete in a `ToDoList`.
+3.  Handling invalid input and indices in a `ToDoList`.
+4.  Using test fixtures to create a `ToDoList` and a `ToDoItem`.
+5.  Using test parameterization to test initializing a `ToDoItem` with different parameters.
+6.  Using test setup and teardown to test setting up and tearing down a `ToDoList`.
+
+These tests ensure that the `ToDoList` and `ToDoItem` classes are working correctly and handle various scenarios as expected.

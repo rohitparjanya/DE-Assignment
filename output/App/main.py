@@ -1,155 +1,246 @@
-import secrets
+import re
 import unittest
 
-# Define a constant for max_attempts
-MAX_ATTEMPTS = 3
+# Custom exception classes
+class ToDoListError(Exception):
+    pass
 
-def get_input(prompt: str, input_type: type, max_attempts: int = MAX_ATTEMPTS) -> input_type:
-    """
-    Gets user input and attempts to convert it to the specified type.
+class InvalidIndexError(ToDoListError):
+    pass
 
-    Args:
-        prompt (str): The prompt to display to the user.
-        input_type (type): The type to which the input should be converted.
-        max_attempts (int): The maximum number of attempts to get a valid input.
+class InvalidInputError(ToDoListError):
+    pass
 
-    Returns:
-        input_type: The user's input as the specified type.
+class ToDoItem:
+    """Represents a single to-do list item."""
+    def __init__(self, title, description, completed=False):
+        """
+        Initializes a new to-do list item.
 
-    Raises:
-        ValueError: If the input cannot be converted to the specified type after max_attempts.
-    """
-    attempts = 0
-    while attempts < max_attempts:
+        Args:
+            title (str): The title of the item.
+            description (str): The description of the item.
+            completed (bool, optional): Whether the item is completed. Defaults to False.
+
+        Raises:
+            InvalidInputError: If the title or description is invalid.
+        """
+        if not re.match(r"^[a-zA-Z0-9\s]+$", title):
+            raise InvalidInputError("Invalid title")
+        if not re.match(r"^[a-zA-Z0-9\s]+$", description):
+            raise InvalidInputError("Invalid description")
+
+        self.title = title
+        self.description = description
+        self.completed = completed
+
+    def mark_as_completed(self):
+        """Marks the item as completed."""
+        self.completed = True
+
+    def mark_as_incomplete(self):
+        """Marks the item as incomplete."""
+        self.completed = False
+
+    def __str__(self):
+        """Returns a string representation of the item."""
+        status = "Completed" if self.completed else "Incomplete"
+        return f"{self.title}: {status}\nDescription: {self.description}"
+
+
+class ToDoList:
+    """Represents a to-do list."""
+    def __init__(self):
+        """Initializes a new to-do list."""
+        self.items = []
+
+    def add_item(self, title, description):
+        """
+        Adds a new item to the list.
+
+        Args:
+            title (str): The title of the item.
+            description (str): The description of the item.
+
+        Raises:
+            InvalidInputError: If the title or description is invalid.
+        """
         try:
-            return input_type(input(prompt))
-        except ValueError:
-            print(f"Invalid input. Please enter a valid {input_type.__name__} value.")
-            attempts += 1
-    raise ValueError("Failed to get a valid input")
+            new_item = ToDoItem(title, description)
+            self.items.append(new_item)
+        except InvalidInputError as e:
+            raise InvalidInputError(f"Failed to add item: {e}")
 
-def get_random_number(min_value: int, max_value: int) -> int:
-    """
-    Generates a random integer between min_value and max_value (inclusive).
+    def remove_item(self, index):
+        """
+        Removes an item from the list.
 
-    Args:
-        min_value (int): The minimum value for the random number.
-        max_value (int): The maximum value for the random number.
+        Args:
+            index (int): The index of the item to remove.
 
-    Returns:
-        int: A random integer between min_value and max_value.
-    """
-    return secrets.randbelow(max_value - min_value + 1) + min_value
+        Raises:
+            InvalidIndexError: If the index is invalid.
+        """
+        try:
+            del self.items[index]
+        except IndexError:
+            raise InvalidIndexError("Invalid index")
 
-def get_random_float(min_value: float, max_value: float) -> float:
-    """
-    Generates a random floating-point number between min_value and max_value.
+    def update_item(self, index, title=None, description=None):
+        """
+        Updates an item in the list.
 
-    Args:
-        min_value (float): The minimum value for the random number.
-        max_value (float): The maximum value for the random number.
+        Args:
+            index (int): The index of the item to update.
+            title (str, optional): The new title of the item. Defaults to None.
+            description (str, optional): The new description of the item. Defaults to None.
 
-    Returns:
-        float: A random floating-point number between min_value and max_value.
+        Raises:
+            InvalidIndexError: If the index is invalid.
+            InvalidInputError: If the title or description is invalid.
+        """
+        try:
+            item = self.items[index]
+            if title:
+                if not re.match(r"^[a-zA-Z0-9\s]+$", title):
+                    raise InvalidInputError("Invalid title")
+                item.title = title
+            if description:
+                if not re.match(r"^[a-zA-Z0-9\s]+$", description):
+                    raise InvalidInputError("Invalid description")
+                item.description = description
+        except IndexError:
+            raise InvalidIndexError("Invalid index")
 
-    Raises:
-        ValueError: If min_value is greater than max_value.
-    """
-    if min_value > max_value:
-        raise ValueError("Minimum value cannot be greater than maximum value")
-    return secrets.uniform(min_value, max_value)
+    def mark_item_as_completed(self, index):
+        """
+        Marks an item as completed.
 
-def display_menu() -> None:
-    """
-    Displays the menu for the random number generator app.
-    """
-    print("Random Number App")
-    print("----------------")
+        Args:
+            index (int): The index of the item to mark as completed.
 
-def generate_random_integer() -> None:
-    """
-    Generates a random integer within a user-specified range.
-    """
-    try:
-        min_value = get_input("Enter minimum value: ", int)
-        max_value = get_input("Enter maximum value: ", int)
-        if min_value > max_value:
-            print("Invalid range. Minimum value should be less than or equal to maximum value.")
-            return
-        random_number = get_random_number(min_value, max_value)
-        print(f"Random integer: {random_number}")
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        Raises:
+            InvalidIndexError: If the index is invalid.
+        """
+        try:
+            self.items[index].mark_as_completed()
+        except IndexError:
+            raise InvalidIndexError("Invalid index")
 
-def generate_random_float() -> None:
-    """
-    Generates a random floating-point number within a user-specified range.
-    """
-    try:
-        min_value = get_input("Enter minimum value: ", float)
-        max_value = get_input("Enter maximum value: ", float)
-        if min_value > max_value:
-            print("Invalid range. Minimum value should be less than or equal to maximum value.")
-            return
-        random_number = get_random_float(min_value, max_value)
-        print(f"Random float: {random_number}")
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+    def mark_item_as_incomplete(self, index):
+        """
+        Marks an item as incomplete.
 
-def main() -> None:
-    """
-    The main function for the random number generator app.
-    """
-    display_menu()
+        Args:
+            index (int): The index of the item to mark as incomplete.
+
+        Raises:
+            InvalidIndexError: If the index is invalid.
+        """
+        try:
+            self.items[index].mark_as_incomplete()
+        except IndexError:
+            raise InvalidIndexError("Invalid index")
+
+    def display_list(self):
+        """Displays the to-do list."""
+        for i, item in enumerate(self.items):
+            print(f"{i+1}. {item}")
+
+
+def main():
+    todo_list = ToDoList()
+
     while True:
-        print("1. Generate random integer")
-        print("2. Generate random float")
-        print("3. Quit")
+        print("\nTo-Do List Menu:")
+        print("1. Add item")
+        print("2. Remove item")
+        print("3. Update item")
+        print("4. Mark item as completed")
+        print("5. Mark item as incomplete")
+        print("6. Display list")
+        print("7. Quit")
 
         choice = input("Enter your choice: ")
 
         if choice == "1":
-            generate_random_integer()
+            title = input("Enter item title: ")
+            description = input("Enter item description: ")
+            try:
+                todo_list.add_item(title, description)
+            except InvalidInputError as e:
+                print(f"Error: {e}")
         elif choice == "2":
-            generate_random_float()
+            try:
+                index = int(input("Enter item index to remove: ")) - 1
+                todo_list.remove_item(index)
+            except InvalidIndexError as e:
+                print(f"Error: {e}")
         elif choice == "3":
-            print("Goodbye!")
+            try:
+                index = int(input("Enter item index to update: ")) - 1
+                title = input("Enter new title (press enter to skip): ")
+                description = input("Enter new description (press enter to skip): ")
+                if title == "":
+                    title = None
+                if description == "":
+                    description = None
+                todo_list.update_item(index, title, description)
+            except InvalidIndexError as e:
+                print(f"Error: {e}")
+            except InvalidInputError as e:
+                print(f"Error: {e}")
+        elif choice == "4":
+            try:
+                index = int(input("Enter item index to mark as completed: ")) - 1
+                todo_list.mark_item_as_completed(index)
+            except InvalidIndexError as e:
+                print(f"Error: {e}")
+        elif choice == "5":
+            try:
+                index = int(input("Enter item index to mark as incomplete: ")) - 1
+                todo_list.mark_item_as_incomplete(index)
+            except InvalidIndexError as e:
+                print(f"Error: {e}")
+        elif choice == "6":
+            todo_list.display_list()
+        elif choice == "7":
             break
         else:
             print("Invalid choice. Please try again.")
 
-class TestRandomNumberGenerator(unittest.TestCase):
-    def test_get_input(self):
-        # Test get_input with valid input
-        self.assertEqual(get_input("Enter a number: ", int), 10)
 
-        # Test get_input with invalid input
-        with self.assertRaises(ValueError):
-            get_input("Enter a number: ", int)
+class TestToDoList(unittest.TestCase):
+    def test_add_item(self):
+        todo_list = ToDoList()
+        todo_list.add_item("Test Item", "Test Description")
+        self.assertEqual(len(todo_list.items), 1)
 
-    def test_get_random_number(self):
-        # Test get_random_number with valid range
-        min_value = 1
-        max_value = 10
-        random_number = get_random_number(min_value, max_value)
-        self.assertGreaterEqual(random_number, min_value)
-        self.assertLessEqual(random_number, max_value)
+    def test_remove_item(self):
+        todo_list = ToDoList()
+        todo_list.add_item("Test Item", "Test Description")
+        todo_list.remove_item(0)
+        self.assertEqual(len(todo_list.items), 0)
 
-        # Test get_random_number with invalid range
-        with self.assertRaises(ValueError):
-            get_random_number(10, 1)
+    def test_update_item(self):
+        todo_list = ToDoList()
+        todo_list.add_item("Test Item", "Test Description")
+        todo_list.update_item(0, "New Test Item", "New Test Description")
+        self.assertEqual(todo_list.items[0].title, "New Test Item")
+        self.assertEqual(todo_list.items[0].description, "New Test Description")
 
-    def test_get_random_float(self):
-        # Test get_random_float with valid range
-        min_value = 1.0
-        max_value = 10.0
-        random_number = get_random_float(min_value, max_value)
-        self.assertGreaterEqual(random_number, min_value)
-        self.assertLessEqual(random_number, max_value)
+    def test_mark_item_as_completed(self):
+        todo_list = ToDoList()
+        todo_list.add_item("Test Item", "Test Description")
+        todo_list.mark_item_as_completed(0)
+        self.assertTrue(todo_list.items[0].completed)
 
-        # Test get_random_float with invalid range
-        with self.assertRaises(ValueError):
-            get_random_float(10.0, 1.0)
+    def test_mark_item_as_incomplete(self):
+        todo_list = ToDoList()
+        todo_list.add_item("Test Item", "Test Description")
+        todo_list.mark_item_as_completed(0)
+        todo_list.mark_item_as_incomplete(0)
+        self.assertFalse(todo_list.items[0].completed)
 
 if __name__ == "__main__":
     unittest.main(exit=False)
